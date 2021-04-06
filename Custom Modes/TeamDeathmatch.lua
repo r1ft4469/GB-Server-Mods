@@ -291,7 +291,7 @@ function teamdeathmatch:RateStart(PlayerStart, PlayerState)
 		result  =  result * TeamPriorityMultiplier
 	end
 	
-	return math.sqrt(ClosestDistSq) / DistScalar * umath.random(45.0, 55.0)
+	return result
 end
 
 function teamdeathmatch:GetSpawnInfo(PlayerState)
