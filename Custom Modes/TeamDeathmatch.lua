@@ -14,9 +14,6 @@ local teamdeathmatch = {
 	bFixedInsertionPoints = false,
 	NumInsertionPointGroups = 0,
 	PrevGroupIndex = 0,
-	RedBlueRecentlyUsedPlayerStarts = {},
-	BlueRecentlyUsedPlayerStarts = {},
-	MaxRecentlyUsedPlayerStarts = 0,
 	TooCloseSq = 100000,
 }
 
