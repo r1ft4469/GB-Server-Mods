@@ -44,6 +44,16 @@ function teamdeathmatch:PostRun()
 		else
 			self.InsertionPoints = AllInsertionPoints
 		end
+	elseif #AllInsertionpoints == 2 then
+		self.bFixedInsertionPoints = false
+		self.InsertionPoints = AllInsertionPoints
+		for i, InsertionPoint in ipairs(self.InsertionPoints) do
+			if actor.GetTeamId(InsertionPoint) ~= 255 then
+				-- Disables insertion point randomisation.
+				self.bFixedInsertionPoints = true
+				break
+			end
+		end
 	else
 		self.InsertionPoints = AllInsertionPoints
 		for i, InsertionPoint in ipairs(self.InsertionPoints) do
