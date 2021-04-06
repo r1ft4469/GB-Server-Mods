@@ -18,6 +18,7 @@ local teamdeathmatch = {
 	BlueRecentlyUsedPlayerStarts = {},
 	MaxRecentlyUsedPlayerStarts = 0,
 	TooCloseSq = 100000,
+	TeamPriorityMultiplier = 4,
 }
 
 function teamdeathmatch:PostRun()
@@ -287,7 +288,7 @@ function teamdeathmatch:RateStart(PlayerStart, PlayerState)
 
 	
 	if ClosestPlayerTeam == actor.GetTeamId(PlayerState) then
-		result  =  result * 4
+		result  =  result * TeamPriorityMultiplier
 	end
 	
 	return math.sqrt(ClosestDistSq) / DistScalar * umath.random(45.0, 55.0)
