@@ -14,6 +14,9 @@ local teamdeathmatch = {
 	bFixedInsertionPoints = false,
 	NumInsertionPointGroups = 0,
 	PrevGroupIndex = 0,
+	RedBlueRecentlyUsedPlayerStarts = {},
+	BlueRecentlyUsedPlayerStarts = {},
+	MaxRecentlyUsedPlayerStarts = 0,
 	TooCloseSq = 100000,
 }
 
@@ -60,6 +63,11 @@ function teamdeathmatch:PostRun()
 	gamemode.AddGameObjective(1, "EliminateRed", 1)
 	gamemode.AddGameObjective(2, "EliminateBlue", 1)
 	gamemode.AddGameSetting("roundtime", 5, 30, 5, 10);
+	if self.bFixedInsertionPoints then
+		gamemode.AddGameSetting("bFixedInsertionPoints", 0, 1, 1, 1);
+	else
+		gamemode.AddGameSetting("bFixedInsertionPoints", 0, 1, 1, 0);
+	end
 	gamemode.SetRoundStage("WaitingForReady")
 end
 
