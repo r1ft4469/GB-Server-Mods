@@ -135,7 +135,6 @@ end
 function teamdeathmatch:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress" then
 		if CharacterController ~= nil then
-			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
 			timer.Set(self, "CheckEndRoundTimer", 0.1, false)
 		end
 	end
