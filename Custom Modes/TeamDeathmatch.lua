@@ -57,6 +57,7 @@ function teamdeathmatch:PostRun()
 
 	gamemode.AddStringTable("teamdeathmatch")
 	gamemode.AddGameRule("UseReadyRoom")
+	gamemode.AddGameRule("UseRounds")
 	gamemode.AddPlayerTeam(self.BlueTeamId, self.BlueTeamTag, self.BlueTeamLoadoutName);
 	gamemode.AddPlayerTeam(self.RedTeamId, self.RedTeamTag, self.RedTeamLoadoutName);
 	gamemode.AddGameObjective(1, "EliminateRed", 1)
@@ -93,7 +94,7 @@ function teamdeathmatch:CheckReadyUpTimer()
 		local RedReady = ReadyPlayerTeamCounts[self.RedTeamId]
 		if BlueReady > 0 and RedReady > 0 then
 			if BlueReady + RedReady >= gamemode.GetPlayerCount(true) then
-				gamemode.SetRoundStage("PreRoundWait")
+				gamemode.SetRoundStage("PreRoundWait")				
 			else
 				gamemode.SetRoundStage("ReadyCountdown")
 			end
@@ -113,7 +114,7 @@ function teamdeathmatch:CheckReadyDownTimer()
 end
 
 function teamdeathmatch:OnRoundStageSet(RoundStage)
-	if RoundStage == "WaitingForReady" then
+	if RoundStage == "WaitingForReady" then	
 		if not self.bFixedInsertionPoints then
 			if self.NumInsertionPointGroups > 1 then
 				self:RandomiseInsertionPointGroups()
@@ -121,6 +122,13 @@ function teamdeathmatch:OnRoundStageSet(RoundStage)
 				self:RandomiseInsertionPoints(self.InsertionPoints)
 			end
 		end
+	elseif RoundStage == "PreRoundWait" then
+		gamemode.BroadcastGameMessage("To Respawn After your First Death", 4.0)
+		gamemode.BroadcastGameMessage("You Must Go Back to Ready Room", 4.0)	
+	elseif RoundStage == "InProgress" then 
+		gamemode.RemoveGameRule("UseRounds")
+	elseif RoundStage == "PostRoundWait" then
+		gamemode.AddGameRule("UseRounds")
 	end
 end
 
