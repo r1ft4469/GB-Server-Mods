@@ -49,7 +49,6 @@ function teamdeathmatch:PostRun()
 		self.InsertionPoints = AllInsertionPoints
 		for i, InsertionPoint in ipairs(self.InsertionPoints) do
 			if actor.GetTeamId(InsertionPoint) ~= 255 then
-				-- Disables insertion point randomisation.
 				self.bFixedInsertionPoints = true
 				break
 			end
@@ -58,7 +57,6 @@ function teamdeathmatch:PostRun()
 
 	gamemode.AddStringTable("teamdeathmatch")
 	gamemode.AddGameRule("UseReadyRoom")
-	gamemode.AddGameRule("UseRounds")
 	gamemode.AddPlayerTeam(self.BlueTeamId, self.BlueTeamTag, self.BlueTeamLoadoutName);
 	gamemode.AddPlayerTeam(self.RedTeamId, self.RedTeamTag, self.RedTeamLoadoutName);
 	gamemode.AddGameObjective(1, "EliminateRed", 1)
@@ -116,7 +114,6 @@ end
 
 function teamdeathmatch:OnRoundStageSet(RoundStage)
 	if RoundStage == "WaitingForReady" then
-		self:SetupRound()
 		if not self.bFixedInsertionPoints then
 			if self.NumInsertionPointGroups > 1 then
 				self:RandomiseInsertionPointGroups()
@@ -127,16 +124,11 @@ function teamdeathmatch:OnRoundStageSet(RoundStage)
 	end
 end
 
-function teamdeathmatch:SetupRound()
-	gamemode.AddGameRule("UseRounds")
-end
-
 function teamdeathmatch:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress" then
 		if CharacterController ~= nil then
 			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
 			timer.Set(self, "CheckEndRoundTimer", 0.1, false)
-			gamemode.EnterReadyRoom(CharacterController)
 		end
 	end
 end
@@ -156,7 +148,6 @@ end
 function teamdeathmatch:CheckEndRoundTimer()
 	local BluePlayers = gamemode.GetPlayerList("", self.BlueTeamId, true, 1, false)
 	local RedPlayers = gamemode.GetPlayerList("", self.RedTeamId, true, 1, false)
-	gamemode.AddGameRule("UseRounds")
 	if #BluePlayers > 0 and #RedPlayers == 0 then
 		gamemode.AddGameStat("Result=Team1")
 		gamemode.AddGameStat("Summary=RedEliminated")
@@ -172,7 +163,6 @@ function teamdeathmatch:CheckEndRoundTimer()
 		gamemode.AddGameStat("Summary=BothEliminated")
 		gamemode.SetRoundStage("PostRoundWait")
 	end
-	gamemode.RemoveGameRule("UseRounds")
 end
 
 function teamdeathmatch:RandomiseInsertionPointGroups()
