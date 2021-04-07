@@ -1,12 +1,12 @@
-local uplink = {
+local specialist = {
 	BlueTeamId = 1,
 	BlueTeamTag = "Blue",
 	BlueTeamLoadoutName = "Blue",
 	RedTeamId = 2,
 	RedTeamTag = "Red",
 	RedTeamLoadoutName = "Red",
-	VipTag = "Vip",
-	VipLoadoutName = "Vip",
+	SpecialistTag = "Specialist",
+	SpecialistLoadoutName = "Specialist",
 	RoundResult = "",
 	DefenderInsertionPoints = {},
 	DefenderIndex = 0,
@@ -28,7 +28,7 @@ local uplink = {
 	AutoSwapCount = 0,
 }
 
-function uplink:PostRun()
+function specialist:PostRun()
 	self.SpawnProtectionVolumes = gameplaystatics.GetAllActorsOfClass('GroundBranch.GBSpawnProtectionVolume')
 	
 	local AllInsertionPoints = gameplaystatics.GetAllActorsOfClass('GroundBranch.GBInsertionPoint')
@@ -86,7 +86,7 @@ function uplink:PostRun()
 	gamemode.SetRoundStage("WaitingForReady")
 end
 
-function uplink:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
+function specialist:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
 	if InsertionPoint == nil then
 		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
 	else
@@ -94,7 +94,7 @@ function uplink:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
 	end
 end
 
-function uplink:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
+function specialist:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
 	if not WantsToEnterPlay then
 		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
 	elseif gamemode.GetRoundStage() == "PreRoundWait" then
@@ -109,7 +109,7 @@ function uplink:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
 	end
 end
 
-function uplink:CheckReadyUpTimer()
+function specialist:CheckReadyUpTimer()
 	if gamemode.GetRoundStage() == "WaitingForReady" or gamemode.GetRoundStage() == "ReadyCountdown" then
 		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(false)
 		local DefendersReady = ReadyPlayerTeamCounts[self.DefendingTeamId]
@@ -124,7 +124,7 @@ function uplink:CheckReadyUpTimer()
 	end
 end
 
-function uplink:CheckReadyDownTimer()
+function specialist:CheckReadyDownTimer()
 	if gamemode.GetRoundStage() == "ReadyCountdown" then
 		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(true)
 		local BlueReady = ReadyPlayerTeamCounts[self.DefendingTeamId]
@@ -135,21 +135,21 @@ function uplink:CheckReadyDownTimer()
 	end
 end
 
-function uplink:OnRoundStageSet(RoundStage)
+function specialist:OnRoundStageSet(RoundStage)
 	if RoundStage == "WaitingForReady" then
 		self:SetupRound()
 	elseif RoundStage == "BlueDefenderSetup" or RoundStage == "RedDefenderSetup" then
 		gamemode.SetRoundStageTime(self.DefenderSetupTime)
-		local VipCandidates = gamemode.GetPlayerList("Lives", self.AttackingTeamId, true, 1, false)
-		local VipIndex = umath.random(#VipCandidates)
-		actor.AddTag(VipCandidates[VipIndex], self.VipTag)	
-		local VipCharacter = player.GetCharacter(VipCandidates[VipIndex])
-		local VipLocation = actor.GetLocation(VipCharacter)
-		for i = 1, #VipCandidates do
-			if i == VipIndex then
-				player.ShowGameMessage(VipCandidates[VipIndex], "You're the specialist this round.", self.DefenderSetupTime - 2)
+		local SpecialistCandidates = gamemode.GetPlayerList("Lives", self.AttackingTeamId, true, 1, false)
+		local SpecialistIndex = umath.random(#SpecialistCandidates)
+		actor.AddTag(SpecialistCandidates[SpecialistIndex], self.SpecialistTag)	
+		local SpecialistCharacter = player.GetCharacter(SpecialistCandidates[SpecialistIndex])
+		local SpecialistLocation = actor.GetLocation(SpecialistCharacter)
+		for i = 1, #SpecialistCandidates do
+			if i == SpecialistIndex then
+				player.ShowGameMessage(SpecialistCandidates[SpecialistIndex], "You're the specialist this round.", self.DefenderSetupTime - 2)
 			else
-				player.ShowWorldPrompt(VipCandidates[i], VipLocation, "Specialist", self.DefenderSetupTime - 2)
+				player.ShowWorldPrompt(SpecialistCandidates[i], SpecialistLocation, "Specialist", self.DefenderSetupTime - 2)
 			end
 		end
 	elseif RoundStage == "InProgress" then
@@ -157,7 +157,7 @@ function uplink:OnRoundStageSet(RoundStage)
 	end
 end
 
-function uplink:OnCharacterDied(Character, CharacterController, KillerController)
+function specialist:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" 
 	or gamemode.GetRoundStage() == "InProgress"
 	or gamemode.GetRoundStage() == "BlueDefenderSetup"
@@ -169,18 +169,18 @@ function uplink:OnCharacterDied(Character, CharacterController, KillerController
 	end
 end
 
-function uplink:CheckEndRoundTimer()
+function specialist:CheckEndRoundTimer()
 	local BluePlayers = gamemode.GetPlayerList("Lives", self.BlueTeamId, true, 1, false)
 	local RedPlayers = gamemode.GetPlayerList("Lives", self.RedTeamId, true, 1, false)
-	local VipLives = "0"
-	local VipPlayers = gamemode.GetPlayerList("Lives", self.AttackingTeamId, true, 1, false)
-	for i = 1, #VipPlayers do
-		if actor.HasTag(VipPlayers[i], self.VipTag) then
-			VipLives = "1"
+	local SpecialistLives = "0"
+	local SpecialistPlayers = gamemode.GetPlayerList("Lives", self.AttackingTeamId, true, 1, false)
+	for i = 1, #SpecialistPlayers do
+		if actor.HasTag(SpecialistPlayers[i], self.SpecialistTag) then
+			SpecialistLives = "1"
 			break
 		end
 	end
-	if VipLives == "0" then
+	if SpecialistLives == "0" then
 		gamemode.BroadcastGameMessage("The specialist has been eliminated.", 3.0)
 		if self.DefendingTeamId == self.BlueTeamId then
 			gamemode.AddGameStat("Result=Team1")
@@ -224,7 +224,7 @@ function uplink:CheckEndRoundTimer()
 	end
 end
 
-function uplink:SetupRound()
+function specialist:SetupRound()
 	if self.AutoSwap then
 		local PrevDefendingTeam = self.DefendingTeamId
 		local PrevAttackingTeam = self.AttackingTeamId
@@ -313,7 +313,7 @@ function uplink:SetupRound()
 	end
 end
 
-function uplink:ShouldCheckForTeamKills()
+function specialist:ShouldCheckForTeamKills()
 	if gamemode.GetRoundStage() == "InProgress" 
 	or gamemode.GetRoundStage() == "BlueDefenderSetup"
 	or gamemode.GetRoundStage() == "RedDefenderSetup" then
@@ -322,14 +322,14 @@ function uplink:ShouldCheckForTeamKills()
 	return false
 end
 
-function uplink:PlayerCanEnterPlayArea(PlayerState)
+function specialist:PlayerCanEnterPlayArea(PlayerState)
 	if player.GetInsertionPoint(PlayerState) ~= nil then
 		return true
 	end
 	return false
 end
 
-function uplink:OnRoundStageTimeElapsed(RoundStage)
+function specialist:OnRoundStageTimeElapsed(RoundStage)
 	if RoundStage == "PreRoundWait" then
 		if self.DefendingTeamId == self.BlueTeamId then
 			gamemode.SetRoundStage("BlueDefenderSetup")
@@ -345,7 +345,7 @@ function uplink:OnRoundStageTimeElapsed(RoundStage)
 	return false
 end
 
-function uplink:OnProcessCommand(Command, Params)
+function specialist:OnProcessCommand(Command, Params)
 	if Command == "defendersetuptime" then
 		if Params ~= nil then
 			self.DefenderSetupTime = math.max(tonumber(Params), self.MinDefenderSetupTime)
@@ -361,21 +361,21 @@ function uplink:OnProcessCommand(Command, Params)
 	end
 end
 
-function uplink:TargetCaptured()
+function specialist:TargetCaptured()
 	local AttackingPlayers = gamemode.GetPlayerList("Lives", self.AttackingTeamId, true, 1, false)
 	local DefendingPlayers = gamemode.GetPlayerList("Lives", self.DefendingTeamId, true, 1, false)
-	local VipLocation = nil
+	local SpecialistLocation = nil
 	for i = 1, #AttackingPlayers do
-		if actor.HasTag(AttackingPlayers[i], self.VipTag) then
+		if actor.HasTag(AttackingPlayers[i], self.SpecialistTag) then
 			local Character = player.GetCharacter(AttackingPlayers[i])
-			VipLocation = actor.GetLocation(Character)
+			SpecialistLocation = actor.GetLocation(Character)
 			break
 		end
 	end
 	local LaptopLocation0 = actor.GetLocation(self.RandomLaptop0)
 	local LaptopLocation1 = actor.GetLocation(self.RandomLaptop1)
-	local LocationDist0 = vector.SizeSq(VipLocation - LaptopLocation0)
-	local LocationDist1 = vector.SizeSq(VipLocation - LaptopLocation1)
+	local LocationDist0 = vector.SizeSq(SpecialistLocation - LaptopLocation0)
+	local LocationDist1 = vector.SizeSq(SpecialistLocation - LaptopLocation1)
 	if LocationDist0 < 10000  or LocationDist1 < 10000 then 
 		for a = 1, #AttackingPlayers do
 			player.ShowGameMessage(AttackingPlayers[a], "Specialist secured the intel.", 2.0)
@@ -409,9 +409,9 @@ function uplink:TargetCaptured()
 	end 
 end
 
-function uplink:PlayerEnteredPlayArea(PlayerState)
+function specialist:PlayerEnteredPlayArea(PlayerState)
 	if actor.GetTeamId(PlayerState) == self.AttackingTeamId then
-		actor.RemoveTag(PlayerState, self.VipTag)
+		actor.RemoveTag(PlayerState, self.SpecialistTag)
 		player.ShowGameMessage(PlayerState, "Escort the specialist to the intel.", 5.0)
 		local FreezeTime = self.DefenderSetupTime + gamemode.GetRoundStageTime()
 		player.FreezePlayer(PlayerState, FreezeTime)
@@ -424,7 +424,7 @@ function uplink:PlayerEnteredPlayArea(PlayerState)
 	end
 end
 
-function uplink:DisableSpawnProtection()
+function specialist:DisableSpawnProtection()
 	if gamemode.GetRoundStage() == "InProgress" then
 		for i, SpawnProtectionVolume in ipairs(self.SpawnProtectionVolumes) do
 			actor.SetActive(SpawnProtectionVolume, false)
@@ -432,10 +432,10 @@ function uplink:DisableSpawnProtection()
 	end
 end
 
-function uplink:LogOut(Exiting)
+function specialist:LogOut(Exiting)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress" then
 		timer.Set(self, "CheckEndRoundTimer", 1.0, false);
 	end
 end
 
-return uplink
+return specialist
