@@ -159,8 +159,8 @@ FreezePlayer(Player, Duration);
 ### StaticsLibrary
 ```
 LuaValueToScript(LuaValue); 
-struct AGBPlayerState* LuaValueToPlayerState(LuaValue); 
-struct AGBCharacter* LuaValueToCharacter(LuaValue); 
+LuaValueToPlayerState(LuaValue); 
+LuaValueToCharacter(LuaValue); 
 ActorsToLuaTable(WorldContextObject, LuaStateClass, Actors);
 ```
 
