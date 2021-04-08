@@ -46,6 +46,16 @@ Get Filter Names from Kit Files in :
 (Would Be Great if someone could compile a list of items)
 
 # Ground Branch Server Lua Commands
+- [GroundBranch.GBLuaActorPackage](#GroundBranch.GBLuaActorPackage)
+- [GroundBranch.GBLuaAIPackage](#GroundBranch.GBLuaAIPackage)
+- [GroundBranch.GBLuaGameModePackage](#GroundBranch.GBLuaGameModePackage)
+- [GroundBranch.GBLuaGameplayStaticsPackage](#GroundBranch.GBLuaGameplayStaticsPackage)
+- [GroundBranch.GBLuaInterface](#GroundBranch.GBLuaInterface)
+- [GroundBranch.GBLuaMathPackage](#GroundBranch.GBLuaMathPackage)
+- [GroundBranch.GBLuaPlayerPackage](#GroundBranch.GBLuaPlayerPackage)
+- [GroundBranch.GBLuaStaticsLibrary](#GroundBranch.GBLuaStaticsLibrary)
+- [GroundBranch.GBLuaTimerPackage](#GroundBranch.GBLuaTimerPackage)
+- [GroundBranch.GBLuaVectorPackage](#GroundBranch.GBLuaVectorPackage)
 
 [GroundBranch.GBLuaActorPackage]
 ```
