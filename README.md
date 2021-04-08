@@ -57,7 +57,7 @@ Get Filter Names from Kit Files in :
 - [GroundBranch.GBLuaTimerPackage](#GBLuaTimerPackage)
 - [GroundBranch.GBLuaVectorPackage](#GBLuaVectorPackage)
 
-[GroundBranch.GBLuaActorPackage]
+### GBLuaActorPackage
 ```
 struct FLuaValue ToString(struct FLuaValue Actor);
 struct FLuaValue SetTeamId(struct FLuaValue Actor, struct FLuaValue TeamId);
@@ -76,7 +76,7 @@ struct FLuaValue GetLocation(struct FLuaValue Actor);
 void AddTag(struct FLuaValue Actor, struct FLuaValue Tag);
 ```
 
-[GroundBranch.GBLuaAIPackage]
+### GBLuaAIPackage
 ```
 struct FLuaValue GetControllers(struct FLuaValue Class, struct FLuaValue Tag, struct FLuaValue TeamId, struct FLuaValue SquadId); 
 void CreateOverDuration(struct FLuaValue Duration, struct FLuaValue Count, struct FLuaValue OrderedSpawnPoints, struct FLuaValue AIControllerTag); 
@@ -84,7 +84,7 @@ void Create(struct FLuaValue SpawnPoint, struct FLuaValue AIControllerTag, struc
 void CleanUp(struct FLuaValue AIControllerTag);
 ```
 
-[GroundBranch.GBLuaGameModePackage]
+### GBLuaGameModePackage
 ```
 void SetTeamAttitude(struct FLuaValue Team, struct FLuaValue OtherTeam, struct FLuaValue Attitude);
 void SetRoundStageTime(struct FLuaValue RoundStageTime); 
@@ -120,7 +120,7 @@ void AddGameRule(struct FLuaValue RuleName);
 void AddGameObjective(struct FLuaValue TeamId, struct FLuaValue Name, struct FLuaValue Type);
 ```
 
-[GroundBranch.GBLuaGameplayStaticsPackage]
+### GBLuaGameplayStaticsPackage
 ```
 struct FLuaValue GetAllActorsWithTag(struct FLuaValue Tag); 
 struct FLuaValue GetAllActorsOfClassWithTag(struct FLuaValue Class, struct FLuaValue Tag); 
@@ -128,18 +128,18 @@ struct FLuaValue GetAllActorsOfClass(struct FLuaValue Class);
 void DebugPrint(struct FLuaValue Message);
 ```
 
-[GroundBranch.GBLuaInterface]
+### GBLuaInterface
 ```
 struct FLuaValue GetLuaTable();
 ```
 
-[GroundBranch.GBLuaMathPackage]
+### GBLuaMathPackage
 ```
 struct FLuaValue GetRandomRange(struct FLuaValue Min, struct FLuaValue Max); 
 struct FLuaValue GetRandom(struct FLuaValue Max);
 ```
 
-[GroundBranch.GBLuaPlayerPackage]
+### GBLuaPlayerPackage 
 ```
 void ShowWorldPrompt(struct FLuaValue Player, struct FLuaValue Location, struct FLuaValue Tag, struct FLuaValue Duration);
 void ShowGameMessage(struct FLuaValue Player, struct FLuaValue Message, struct FLuaValue Duration);
@@ -156,7 +156,7 @@ struct FLuaValue GetCharacter(struct FLuaValue Player);
 void FreezePlayer(struct FLuaValue Player, struct FLuaValue Duration);
 ```
 
-[GroundBranch.GBLuaStaticsLibrary]
+### GBLuaStaticsLibrary
 ```
 struct FLuaValue LuaValueToScript(struct FLuaValue LuaValue); 
 struct AGBPlayerState* LuaValueToPlayerState(struct FLuaValue LuaValue); 
@@ -164,7 +164,7 @@ struct AGBCharacter* LuaValueToCharacter(struct FLuaValue LuaValue);
 struct FLuaValue ActorsToLuaTable(struct UObject* WorldContextObject, struct ULuaState* LuaStateClass, struct TArray<struct AActor*> Actors);
 ```
 
-[GroundBranch.GBLuaTimerPackage]
+### GBLuaTimerPackage
 ```
 void SetTimer(struct FLuaValue InTable, struct FLuaValue InKey, struct FLuaValue InRate, struct FLuaValue InLoop);
 void ClearTimer(struct FLuaValue InTable, struct FLuaValue InKey);
@@ -172,7 +172,7 @@ void ClearAll();
 ```
 
 
-[GroundBranch.GBLuaVectorPackage]
+### GBLuaVectorPackage
 ```
 struct FLuaValue VectorSubtract(struct FLuaValue A, struct FLuaValue B);
 struct FLuaValue VectorStr(struct FLuaValue LuaVector);
