@@ -161,7 +161,7 @@ FreezePlayer(Player, Duration);
 LuaValueToScript(LuaValue); 
 struct AGBPlayerState* LuaValueToPlayerState(LuaValue); 
 struct AGBCharacter* LuaValueToCharacter(LuaValue); 
-ActorsToLuaTable(struct UObject* WorldContextObject, struct ULuaState* LuaStateClass, struct TArray<struct AActor*> Actors);
+ActorsToLuaTable(WorldContextObject, LuaStateClass, Actors);
 ```
 
 ### Timer
