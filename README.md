@@ -83,6 +83,7 @@ GetControllers(Class, Tag, TeamId, SquadId);
 CreateOverDuration(Duration, Count, OrderedSpawnPoints, AIControllerTag); 
 Create(SpawnPoint, AIControllerTag, FreezeTime);
 CleanUp(AIControllerTag);
+GetMaxCount();
 ```
 
 ### GameMode
