@@ -1,3 +1,43 @@
+Ground Branch Server Mods
+=============================
+
+- [Installing Modes and Maps](#installing-modes-and-maps)
+- [Enforcing Clothing Colors On Server](#enforcing-clothing-colors-on-server)
+- [Enforcing Gear Sets On Server](#enforcing-gear-sets-on-server)
+- [Ground Branch Server Lua Commands](#ground-branch-server-lua-commands)
+
+----------------------------------
+
+# Installing Modes and Maps
+
+Extract **Release Files** to Ground Branch Server Dir
+ex. `Steam\steamapps\common\Ground Branch`
+
+**NOTE:**
+**Must Be Installed Locally to Change Server to Map and Mode!! (Only Admins Need)**
+**If Not Using Release Files Maps May Not Work at All.**
+
+# Enforcing Clothing Colors On Server
+
+Files for Clothing Enforcement for Red and Blue are in :
+`GroundBranch\ServerConfig`
+
+These Files Enforce
+* Red Shirts and Tan Rigs
+* Blue Shirts and Black Rigs
+
+# Enforcing Gear Sets On Server
+
+**Must set Custom TeamLoadoutName in the lua to Enforce (Client Takes Priority)**
+**These Files are Compleatly Default**
+
+Files for Gear Sets for Red and Blue are in :
+`GroundBranch\Content\GroundBranch\DefaultLoadouts`
+
+Get Filter Names from Kit Files in :
+`%USERPROFILE%\Documents\GroundBranch\Loadouts`
+(Would Be Great if someone could compile a list of items)
+
 # Ground Branch Server Lua Commands
 
 [GroundBranch.GBLuaActorPackage]
