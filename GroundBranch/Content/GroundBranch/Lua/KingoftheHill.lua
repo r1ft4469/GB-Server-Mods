@@ -11,7 +11,8 @@ local teamelimination = {
 	NumInsertionPointGroups = 0,
 	PrevGroupIndex = 0,
 	ExtractionPoints = {},
-	ExtractionPointMarkers = {},
+	ExtractionPointMarkersBlue = {},
+	ExtractionPointMarkersRed = {},
 	ExtractionPoint = nil,
 	ExtractionPointIndex = nil,
 	TeamExfil = false,
@@ -53,20 +54,22 @@ function teamelimination:PostRun()
 		end
 	end
 
-	
-	self.ExtractionPoints = gameplaystatics.GetAllActorsOfClass('/Game/GroundBranch/Props/GameMode/BP_ExtractionPoint.BP_ExtractionPoint_C')
-
 	self.RedCaptureCheck = false
 	self.BlueCaptureCheck = false
-
+	self.ExtractionPoints = gameplaystatics.GetAllActorsOfClass('/Game/GroundBranch/Props/GameMode/BP_ExtractionPoint.BP_ExtractionPoint_C')
+	for i = 1, #self.ExtractionPoints do
+		local Location = actor.GetLocation(self.ExtractionPoints[i])
+		self.ExtractionPointMarkersRed[i] = gamemode.AddObjectiveMarker(Location, 2, "ExtractionPoint", false)
+		self.ExtractionPointMarkersBlue[i] = gamemode.AddObjectiveMarker(Location, 1, "ExtractionPoint", false)
+	end
 
 	gamemode.AddStringTable("teamelimination")
 	gamemode.AddGameRule("UseReadyRoom")
 	gamemode.AddGameRule("UseRounds")
 	gamemode.AddPlayerTeam(self.BlueTeamId, self.BlueTeamTag, self.BlueTeamLoadoutName);
 	gamemode.AddPlayerTeam(self.RedTeamId, self.RedTeamTag, self.RedTeamLoadoutName);
-	gamemode.AddGameObjective(1, "CaptureAndHoldObj", 1)
-	gamemode.AddGameObjective(2, "CaptureAndHoldObj", 1)
+	gamemode.AddGameObjective(1, "CaptureAndHoldExtractionForSixtySeconds", 1)
+	gamemode.AddGameObjective(2, "CaptureAndHoldExtractionForSixtySeconds", 1)
 	gamemode.AddGameSetting("roundtime", 1, 30, 1, 5);
 	gamemode.SetRoundStage("WaitingForReady")
 end
@@ -186,13 +189,13 @@ function teamelimination:CheckCaptureTimer()
 			timer.Clear(self, "CheckCaptureTimer")
 			gamemode.AddGameStat("Result=Team2")
 			gamemode.AddGameStat("Summary=CapturedObj")
-			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldObj")
+			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
 			gamemode.SetRoundStage("PostRoundWait")
 		elseif self.BlueCaptureCheck then
 			timer.Clear(self, "CheckCaptureTimer")
 			gamemode.AddGameStat("Result=Team1")
 			gamemode.AddGameStat("Summary=CapturedObj")
-			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldObj")
+			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
 			gamemode.SetRoundStage("PostRoundWait")
 		end
 	else
@@ -228,7 +231,8 @@ function teamelimination:OnRoundStageSet(RoundStage)
 		for i = 1, #self.ExtractionPoints do
 			local bActive = (i == self.ExtractionPointIndex)
 			actor.SetActive(self.ExtractionPoints[i], bActive)
-			actor.SetActive(self.ExtractionPointMarkers[i], bActive)
+			actor.SetActive(self.ExtractionPointMarkersBlue[i], bActive)
+			actor.SetActive(self.ExtractionPointMarkersRed[i], bActive)
 			self.ExtractionPoint = self.ExtractionPoints[i]
 		end
 		if not self.bFixedInsertionPoints then
@@ -293,13 +297,13 @@ function teamelimination:CheckEndRoundTimer()
 		timer.Clear(self, "CheckCaptureTimer")
 		gamemode.AddGameStat("Result=Team1")
 		gamemode.AddGameStat("Summary=RedEliminated")
-		gamemode.AddGameStat("CompleteObjectives=EliminateBlue")
+		gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
 		gamemode.SetRoundStage("PostRoundWait")
 	elseif #BluePlayers == 0 and #RedPlayers > 0 then
 		timer.Clear(self, "CheckCaptureTimer")
 		gamemode.AddGameStat("Result=Team2")
 		gamemode.AddGameStat("Summary=BlueEliminated")
-		gamemode.AddGameStat("CompleteObjectives=EliminateRed")
+		gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
 		gamemode.SetRoundStage("PostRoundWait")
 	elseif #BluePlayers == 0 and #RedPlayers == 0 then
 		timer.Clear(self, "CheckCaptureTimer")
