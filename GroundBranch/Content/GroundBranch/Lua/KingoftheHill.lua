@@ -58,6 +58,7 @@ function teamelimination:PostRun()
 	self.RedCaptureCheck = false
 	self.BlueCaptureCheck = false
 
+
 	gamemode.AddStringTable("teamelimination")
 	gamemode.AddGameRule("UseReadyRoom")
 	gamemode.AddGameRule("UseRounds")
@@ -103,7 +104,7 @@ end
 function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
 	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 1, true, 1, false)
+		local LivingPlayers = gamemode.GetPlayerList("Lives", 0, true, 1, false)
 		for i = 1, #LivingPlayers do
 			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
 			for j = 1, #Overlaps do
@@ -145,7 +146,7 @@ function teamelimination:OnGameTriggerEndOverlap(GameTrigger, Character)
 		self.RedCaptureCheck = false
 		self.BlueCaptureCheck = false
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 1, true, 1, false)
+		local LivingPlayers = gamemode.GetPlayerList("Lives", 0, true, 1, false)
 		for i = 1, #LivingPlayers do
 			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
 			for j = 1, #Overlaps do
@@ -236,7 +237,7 @@ function teamelimination:OnRoundStageSet(RoundStage)
 end
 
 function teamelimination:OnCharacterDied(Character, CharacterController, KillerController)
-	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress" then
+	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing"then
 		if CharacterController ~= nil then
 			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
 			timer.Set(self, "CheckEndRoundTimer", 1.0, false);
