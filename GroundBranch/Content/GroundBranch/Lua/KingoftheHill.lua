@@ -55,12 +55,6 @@ function teamelimination:PostRun()
 	
 	self.ExtractionPoints = gameplaystatics.GetAllActorsOfClass('/Game/GroundBranch/Props/GameMode/BP_ExtractionPoint.BP_ExtractionPoint_C')
 
-	for i = 1, #self.ExtractionPoints do
-		local Location = actor.GetLocation(self.ExtractionPoints[i])
-		self.ExtractionPointMarkers[i] = gamemode.AddObjectiveMarker(Location, 1, "ExtractionPoint", false)
-		self.ExtractionPointMarkers[i] = gamemode.AddObjectiveMarker(Location, 2, "ExtractionPoint", false)
-	end
-
 	self.RedCaptureCheck = false
 	self.BlueCaptureCheck = false
 
