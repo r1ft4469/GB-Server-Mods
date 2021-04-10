@@ -103,7 +103,7 @@ function teamelimination:CheckReadyUpTimer()
 end
 
 function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
-	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
 		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
 		for i = 1, #LivingPlayers do
@@ -135,7 +135,7 @@ function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
 			end
 		else
 			timer.Clear(self, "CheckCaptureTimer")
-			gamemode.SetRoundStage("Contested")
+			gamemode.SetRoundStage("Uncontested")
 			self.RedCaptureCheck = false
 			self.BlueCaptureCheck = false
 		end
@@ -143,7 +143,7 @@ function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
 end
 
 function teamelimination:OnGameTriggerEndOverlap(GameTrigger, Character)
-	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		self.RedCaptureCheck = false
 		self.BlueCaptureCheck = false
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
@@ -174,7 +174,7 @@ function teamelimination:OnGameTriggerEndOverlap(GameTrigger, Character)
 				gamemode.SetRoundStage("Contested")
 			end
 		else
-			gamemode.SetRoundStage("Contested")
+			gamemode.SetRoundStage("Uncontested")
 			timer.Clear(self, "CheckCaptureTimer")
 		end
 	end
@@ -196,7 +196,11 @@ function teamelimination:CheckCaptureTimer()
 			gamemode.SetRoundStage("PostRoundWait")
 		end
 	else
-		gamemode.SetRoundStage("Contested")
+		if self.RedCaptureCheck or self.BlueCaptureCheck then
+			gamemode.SetRoundStage("Contested")
+		else
+			gamemode.SetRoundStage("Uncontested")
+		end
 		self.RedCaptureCheck = false
 		self.BlueCaptureCheck = false
 	end
@@ -238,7 +242,7 @@ function teamelimination:OnRoundStageSet(RoundStage)
 end
 
 function teamelimination:OnCharacterDied(Character, CharacterController, KillerController)
-	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		if CharacterController ~= nil then
 			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
 			timer.Set(self, "CheckEndRoundTimer", 1.0, false);
@@ -249,6 +253,41 @@ end
 function teamelimination:CheckEndRoundTimer()
 	local BluePlayers = gamemode.GetPlayerList("Lives", self.BlueTeamId, true, 1, false)
 	local RedPlayers = gamemode.GetPlayerList("Lives", self.RedTeamId, true, 1, false)
+	local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
+	local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
+	for i = 1, #LivingPlayers do
+		local LivingCharacter = player.GetCharacter(LivingPlayers[i])
+		for j = 1, #Overlaps do
+			if Overlaps[j] == LivingCharacter then
+				if actor.GetTeamId(LivingCharacter) == self.BlueTeamId then
+					self.BlueCaptureCheck = true
+				elseif actor.GetTeamId(LivingCharacter) == self.RedTeamId then
+					self.RedCaptureCheck = true
+				end
+			end
+		end
+	end
+	if self.BlueCaptureCheck or self.RedCaptureCheck then
+		if not self.RedCaptureCheck == self.BlueCaptureCheck then
+			if self.RedCaptureCheck then
+				gamemode.SetRoundStage("RedCapturing")
+				timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
+			elseif self.BlueCaptureCheck then
+				gamemode.SetRoundStage("BlueCapturing")
+				timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
+			end
+		else
+			timer.Clear(self, "CheckCaptureTimer")
+			gamemode.SetRoundStage("Contested")
+			self.RedCaptureCheck = false
+			self.BlueCaptureCheck = false
+		end
+	else
+		timer.Clear(self, "CheckCaptureTimer")
+		gamemode.SetRoundStage("Uncontested")
+		self.RedCaptureCheck = false
+		self.BlueCaptureCheck = false
+	end
 	
 	if #BluePlayers > 0 and #RedPlayers == 0 then
 		timer.Clear(self, "CheckCaptureTimer")
@@ -323,7 +362,7 @@ function teamelimination:RandomiseInsertionPoints(TargetInsertionPoints)
 end
 
 function teamelimination:ShouldCheckForTeamKills()
-	if gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+	if gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		return true
 	end
 	return false
@@ -337,7 +376,7 @@ function teamelimination:PlayerCanEnterPlayArea(PlayerState)
 end
 
 function teamelimination:LogOut(Exiting)
-	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		timer.Set(self, "CheckEndRoundTimer", 1.0, false);
 	end
 end
