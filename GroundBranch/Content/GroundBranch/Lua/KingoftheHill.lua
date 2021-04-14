@@ -107,6 +107,8 @@ end
 
 function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
 	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+		self.RedCaptureCheck = false
+		self.BlueCaptureCheck = false
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
 		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
 		for i = 1, #LivingPlayers do
@@ -248,8 +250,9 @@ end
 function teamelimination:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		if CharacterController ~= nil then
-			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
-			timer.Set(self, "CheckEndRoundTimer", 1.0, false);
+			player.SetLives(CharacterController, 0)
+			timer.Set(self, "CheckEndRoundTimer", 1.0, false)
+			gamemode.EnterReadyRoom(CharacterController)
 		end
 	end
 end
@@ -259,6 +262,8 @@ function teamelimination:CheckEndRoundTimer()
 	local RedPlayers = gamemode.GetPlayerList("Lives", self.RedTeamId, true, 1, false)
 	local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
 	local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
+	self.RedCaptureCheck = false
+	self.BlueCaptureCheck = false
 	for i = 1, #LivingPlayers do
 		local LivingCharacter = player.GetCharacter(LivingPlayers[i])
 		for j = 1, #Overlaps do
@@ -283,8 +288,6 @@ function teamelimination:CheckEndRoundTimer()
 		else
 			timer.Clear(self, "CheckCaptureTimer")
 			gamemode.SetRoundStage("Contested")
-			self.RedCaptureCheck = false
-			self.BlueCaptureCheck = false
 		end
 	else
 		timer.Clear(self, "CheckCaptureTimer")
