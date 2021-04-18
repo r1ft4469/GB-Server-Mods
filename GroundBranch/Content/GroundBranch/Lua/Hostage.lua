@@ -1,4 +1,4 @@
-local uplink = {
+local hostage = {
 	BlueTeamId = 1,
 	BlueTeamTag = "Blue",
 	BlueTeamLoadoutName = "Blue",
@@ -34,7 +34,7 @@ local uplink = {
 	AutoSwapCount = 0,
 }
 
-function uplink:PostRun()
+function hostage:PostRun()
 	self.HostageStarts = gameplaystatics.GetAllActorsOfClassWithTag('GroundBranch.GBPlayerStart', self.HostageTag)
 	self.SpawnProtectionVolumes = gameplaystatics.GetAllActorsOfClass('GroundBranch.GBSpawnProtectionVolume')
 	
@@ -78,7 +78,7 @@ function uplink:PostRun()
 		AttackingTeamId = 2
 	end
 	
-	gamemode.AddStringTable("Uplink")
+	gamemode.AddStringTable("Hostage")
 	gamemode.AddGameRule("UseReadyRoom")
 	gamemode.AddGameRule("UseRounds")
 	gamemode.AddPlayerTeam(self.BlueTeamId, self.BlueTeamTag, self.BlueTeamLoadoutName);
@@ -89,7 +89,7 @@ function uplink:PostRun()
 	gamemode.SetRoundStage("WaitingForReady")
 end
 
-function uplink:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
+function hostage:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
 	if InsertionPoint == nil then
 		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
 	else
@@ -97,7 +97,7 @@ function uplink:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
 	end
 end
 
-function uplink:GetSpawnInfo(PlayerState)
+function hostage:GetSpawnInfo(PlayerState)
 	local HostageCandidates = gamemode.GetPlayerList("", 3, true, 0, false)
 	if PlayerState == player.GetPlayerState(HostageCandidates[self.HostageIndex]) then
 		local HostageStartIndex = umath.random(#self.HostageStarts)
@@ -105,7 +105,7 @@ function uplink:GetSpawnInfo(PlayerState)
 	end
 end
 
-function uplink:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
+function hostage:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
 	if not WantsToEnterPlay then
 		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
 	elseif gamemode.GetRoundStage() == "PreRoundWait" then
@@ -120,7 +120,7 @@ function uplink:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
 	end
 end
 
-function uplink:CheckReadyUpTimer()
+function hostage:CheckReadyUpTimer()
 	if gamemode.GetRoundStage() == "WaitingForReady" or gamemode.GetRoundStage() == "ReadyCountdown" then
 		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(false)
 		local DefendersReady = ReadyPlayerTeamCounts[self.DefendingTeamId]
@@ -135,7 +135,7 @@ function uplink:CheckReadyUpTimer()
 	end
 end
 
-function uplink:CheckReadyDownTimer()
+function hostage:CheckReadyDownTimer()
 	if gamemode.GetRoundStage() == "ReadyCountdown" then
 		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(true)
 		local BlueReady = ReadyPlayerTeamCounts[self.DefendingTeamId]
@@ -146,7 +146,7 @@ function uplink:CheckReadyDownTimer()
 	end
 end
 
-function uplink:OnRoundStageSet(RoundStage)
+function hostage:OnRoundStageSet(RoundStage)
 	if RoundStage == "WaitingForReady" then
 		self:SetupRound()
 	elseif RoundStage == "PreRoundWait" then
@@ -174,11 +174,11 @@ function uplink:OnRoundStageSet(RoundStage)
 	end
 end
 
-function uplink:OnGameTriggerBeginOverlap(GameTrigger, Character)
+function hostage:OnGameTriggerBeginOverlap(GameTrigger, Character)
 	timer.Set(self, "CheckExfilTimer", 1.0, true)
 end
 
-function uplink:CheckExfilTimer()
+function hostage:CheckExfilTimer()
 	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "BlueDefenderSetup" or gamemode.GetRoundStage() == "RedDefenderSetup" then
 	
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
@@ -234,7 +234,7 @@ function uplink:CheckExfilTimer()
 	end
 end
 
-function uplink:OnCharacterDied(Character, CharacterController, KillerController)
+function hostage:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" 
 	or gamemode.GetRoundStage() == "InProgress"
 	or gamemode.GetRoundStage() == "BlueDefenderSetup"
@@ -246,7 +246,7 @@ function uplink:OnCharacterDied(Character, CharacterController, KillerController
 	end
 end
 
-function uplink:CheckEndRoundTimer()
+function hostage:CheckEndRoundTimer()
 	local BluePlayers = gamemode.GetPlayerList("Lives", self.BlueTeamId, true, 1, false)
 	local RedPlayers = gamemode.GetPlayerList("Lives", self.RedTeamId, true, 1, false)
 	local HostageLives = "0"
@@ -286,7 +286,7 @@ function uplink:CheckEndRoundTimer()
 	end
 end
 
-function uplink:SetupRound()
+function hostage:SetupRound()
 	if self.AutoSwap then
 		local PrevDefendingTeam = self.DefendingTeamId
 		local PrevAttackingTeam = self.AttackingTeamId
@@ -366,7 +366,7 @@ function uplink:SetupRound()
 	local InsertionPointName = gamemode.GetInsertionPointName(self.DefenderInsertionPoints[self.DefenderIndex])
 end
 
-function uplink:ShouldCheckForTeamKills()
+function hostage:ShouldCheckForTeamKills()
 	if gamemode.GetRoundStage() == "InProgress" 
 	or gamemode.GetRoundStage() == "BlueDefenderSetup"
 	or gamemode.GetRoundStage() == "RedDefenderSetup" then
@@ -375,14 +375,14 @@ function uplink:ShouldCheckForTeamKills()
 	return false
 end
 
-function uplink:PlayerCanEnterPlayArea(PlayerState)
+function hostage:PlayerCanEnterPlayArea(PlayerState)
 	if player.GetInsertionPoint(PlayerState) ~= nil then
 		return true
 	end
 	return false
 end
 
-function uplink:OnRoundStageTimeElapsed(RoundStage)
+function hostage:OnRoundStageTimeElapsed(RoundStage)
 	if RoundStage == "PreRoundWait" then
 		if self.DefendingTeamId == self.BlueTeamId then
 			gamemode.SetRoundStage("BlueDefenderSetup")
@@ -398,7 +398,7 @@ function uplink:OnRoundStageTimeElapsed(RoundStage)
 	return false
 end
 
-function uplink:OnProcessCommand(Command, Params)
+function hostage:OnProcessCommand(Command, Params)
 	if Command == "defendersetuptime" then
 		if Params ~= nil then
 			self.DefenderSetupTime = math.max(tonumber(Params), self.MinDefenderSetupTime)
@@ -414,7 +414,7 @@ function uplink:OnProcessCommand(Command, Params)
 	end
 end
 
-function uplink:PlayerEnteredPlayArea(PlayerState)
+function hostage:PlayerEnteredPlayArea(PlayerState)
 	if actor.GetTeamId(PlayerState) == self.AttackingTeamId then
 		if not actor.HasTag(PlayerState, self.HostageTag) then
 			local FreezeTime = self.DefenderSetupTime + gamemode.GetRoundStageTime()
@@ -423,7 +423,7 @@ function uplink:PlayerEnteredPlayArea(PlayerState)
 	end
 end
 
-function uplink:DisableSpawnProtection()
+function hostage:DisableSpawnProtection()
 	if gamemode.GetRoundStage() == "InProgress" then
 		for i, SpawnProtectionVolume in ipairs(self.SpawnProtectionVolumes) do
 			actor.SetActive(SpawnProtectionVolume, false)
@@ -431,10 +431,10 @@ function uplink:DisableSpawnProtection()
 	end
 end
 
-function uplink:LogOut(Exiting)
+function hostage:LogOut(Exiting)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "InProgress" then
 		timer.Set(self, "CheckEndRoundTimer", 1.0, false);
 	end
 end
 
-return uplink
+return hostage
