@@ -110,7 +110,7 @@ function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
 		self.RedCaptureCheck = false
 		self.BlueCaptureCheck = false
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
+		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 0, false)
 		for i = 1, #LivingPlayers do
 			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
 			for j = 1, #Overlaps do
@@ -152,7 +152,7 @@ function teamelimination:OnGameTriggerEndOverlap(GameTrigger, Character)
 		self.RedCaptureCheck = false
 		self.BlueCaptureCheck = false
 		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
+		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 0, false)
 		for i = 1, #LivingPlayers do
 			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
 			for j = 1, #Overlaps do
@@ -244,6 +244,10 @@ function teamelimination:OnRoundStageSet(RoundStage)
 				self:RandomiseInsertionPoints(self.InsertionPoints)
 			end
 		end
+	elseif RoundStage == "RedCapturing" or RoundStage == "BlueCapturing" then
+		gamemode.SetRoundStageTime(self.CaptureTime)
+	elseif RoundStage == "Uncontested" or RoundStage == "Contested" then
+		gamemode.SetRoundStageTime(gamemode.GetGameOption("roundtime") * 60)
 	end
 end
 
