@@ -1,27 +1,43 @@
-local teamelimination = {
-	BlueTeamId = 1,
-	BlueTeamTag = "Blue",
-	BlueTeamLoadoutName = "Blue",
-	RedTeamId = 2,
-	RedTeamTag = "Red",
-	RedTeamLoadoutName = "Red",
-	RoundResult = "",
-	InsertionPoints = {},
-	bFixedInsertionPoints = false,
-	NumInsertionPointGroups = 0,
-	PrevGroupIndex = 0,
+local kingofthehill = {
+	UseReadyRoom = true,
+	UseRounds = true,
+	StringTables = { "KingOfTheHill" },
+	PlayerTeams = {
+		Blue = {
+			TeamId = 1,
+			Loadout = "Blue",
+		},
+		Red = {
+			TeamId = 2,
+			Loadout = "Red",
+		},
+	},
+	Settings = {
+		RoundTime = {
+			Min = 5,
+			Max = 30,
+			Value = 10,
+		},
+		AutoSwap = {
+			Min = 0,
+			Max = 1,
+			Value = 1,
+		},
+		CaptureTime = {
+			Min = 10,
+			Max = 3600,
+			Value = 60,
+		},
+	},
+	ShowAutoSwapMessage = false,
 	ExtractionPoints = {},
 	ExtractionPointMarkersBlue = {},
 	ExtractionPointMarkersRed = {},
 	ExtractionPoint = nil,
 	ExtractionPointIndex = nil,
-	TeamExfil = false,
-	RedCaptureCheck = false,
-	BlueCaptureCheck = false,
-	CaptureTime = 60,
 }
 
-function teamelimination:PostRun()
+function kingofthehill:PreInit()
 	local AllInsertionPoints = gameplaystatics.GetAllActorsOfClass('GroundBranch.GBInsertionPoint')
 	
 	if #AllInsertionPoints > 2 then
@@ -54,47 +70,44 @@ function teamelimination:PostRun()
 		end
 	end
 
-	self.RedCaptureCheck = false
-	self.BlueCaptureCheck = false
 	self.ExtractionPoints = gameplaystatics.GetAllActorsOfClass('/Game/GroundBranch/Props/GameMode/BP_ExtractionPoint.BP_ExtractionPoint_C')
 	for i = 1, #self.ExtractionPoints do
 		local Location = actor.GetLocation(self.ExtractionPoints[i])
 		self.ExtractionPointMarkersRed[i] = gamemode.AddObjectiveMarker(Location, 2, "ExtractionPoint", false)
 		self.ExtractionPointMarkersBlue[i] = gamemode.AddObjectiveMarker(Location, 1, "ExtractionPoint", false)
 	end
-
-	gamemode.AddStringTable("teamelimination")
-	gamemode.AddGameRule("UseReadyRoom")
-	gamemode.AddGameRule("UseRounds")
-	gamemode.AddPlayerTeam(self.BlueTeamId, self.BlueTeamTag, self.BlueTeamLoadoutName);
-	gamemode.AddPlayerTeam(self.RedTeamId, self.RedTeamTag, self.RedTeamLoadoutName);
-	gamemode.AddGameObjective(1, "CaptureAndHoldExtractionForSixtySeconds", 1)
-	gamemode.AddGameObjective(2, "CaptureAndHoldExtractionForSixtySeconds", 1)
-	gamemode.AddGameSetting("roundtime", 1, 30, 1, 5);
-	gamemode.SetRoundStage("WaitingForReady")
 end
 
-function teamelimination:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
+function kingofthehill:PostInit()
+    gamemode.AddGameObjective(self.PlayerTeams.Blue.TeamId, "CaptureAndHoldExtraction", 1)
+	gamemode.AddGameObjective(self.PlayerTeams.Red.TeamId, "CaptureAndHoldExtraction", 1)
+end
+
+function kingofthehill:PlayerInsertionPointChanged(PlayerState, InsertionPoint)
 	if InsertionPoint == nil then
-		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
+		timer.Set("CheckReadyDown", self, self.CheckReadyDownTimer, 0.1, false);
 	else
-		timer.Set(self, "CheckReadyUpTimer", 0.25, false);
+		timer.Set("CheckReadyUp", self, self.CheckReadyUpTimer, 0.25, false);
 	end
 end
 
-function teamelimination:PlayerWantsToEnterPlayChanged(PlayerState, WantsToEnterPlay)
-	if not WantsToEnterPlay then
-		timer.Set(self, "CheckReadyDownTimer", 0.1, false);
-	elseif gamemode.GetRoundStage() == "PreRoundWait" and gamemode.PrepLatecomer(PlayerState) then
+function kingofthehill:PlayerReadyStatusChanged(PlayerState, ReadyStatus)
+	if ReadyStatus ~= "DeclaredReady" then
+		timer.Set("CheckReadyDown", self, self.CheckReadyDownTimer, 0.1, false)
+	end
+	
+	if ReadyStatus == "WaitingToReadyUp" 
+	and gamemode.GetRoundStage() == "PreRoundWait" 
+	and gamemode.PrepLatecomer(PlayerState) then
 		gamemode.EnterPlayArea(PlayerState)
 	end
 end
 
-function teamelimination:CheckReadyUpTimer()
+function kingofthehill:CheckReadyUpTimer()
 	if gamemode.GetRoundStage() == "WaitingForReady" or gamemode.GetRoundStage() == "ReadyCountdown" then
-		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(false)
-		local BlueReady = ReadyPlayerTeamCounts[self.BlueTeamId]
-		local RedReady = ReadyPlayerTeamCounts[self.RedTeamId]
+		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(true)
+		local BlueReady = ReadyPlayerTeamCounts[self.PlayerTeams.Blue.TeamId]
+		local RedReady = ReadyPlayerTeamCounts[self.PlayerTeams.Red.TeamId]
 		if BlueReady > 0 and RedReady > 0 then
 			if BlueReady + RedReady >= gamemode.GetPlayerCount(true) then
 				gamemode.SetRoundStage("PreRoundWait")
@@ -105,129 +118,20 @@ function teamelimination:CheckReadyUpTimer()
 	end
 end
 
-function teamelimination:OnGameTriggerBeginOverlap(GameTrigger, Character)
-	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
-		self.RedCaptureCheck = false
-		self.BlueCaptureCheck = false
-		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 0, false)
-		for i = 1, #LivingPlayers do
-			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
-			for j = 1, #Overlaps do
-				if Overlaps[j] == LivingCharacter then
-					if actor.GetTeamId(LivingCharacter) == self.BlueTeamId then
-						self.BlueCaptureCheck = true
-					elseif actor.GetTeamId(LivingCharacter) == self.RedTeamId then
-						self.RedCaptureCheck = true
-					end
-				end
-			end
-		end
-		if self.BlueCaptureCheck or self.RedCaptureCheck then
-			if not self.RedCaptureCheck == self.BlueCaptureCheck then
-				if self.RedCaptureCheck then
-					gamemode.SetRoundStage("RedCapturing")
-					timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
-				elseif self.BlueCaptureCheck then
-					gamemode.SetRoundStage("BlueCapturing")
-					timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
-				end
-			else
-				timer.Clear(self, "CheckCaptureTimer")
-				gamemode.SetRoundStage("Contested")
-				self.RedCaptureCheck = false
-				self.BlueCaptureCheck = false
-			end
-		else
-			timer.Clear(self, "CheckCaptureTimer")
-			gamemode.SetRoundStage("Uncontested")
-			self.RedCaptureCheck = false
-			self.BlueCaptureCheck = false
-		end
-	end
-end
-
-function teamelimination:OnGameTriggerEndOverlap(GameTrigger, Character)
-	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
-		self.RedCaptureCheck = false
-		self.BlueCaptureCheck = false
-		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-		local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 0, false)
-		for i = 1, #LivingPlayers do
-			local LivingCharacter = player.GetCharacter(LivingPlayers[i])
-			for j = 1, #Overlaps do
-				if Overlaps[j] == LivingCharacter then
-					if actor.GetTeamId(LivingCharacter) == self.BlueTeamId then
-						self.BlueCaptureCheck = true
-					elseif actor.GetTeamId(LivingCharacter) == self.RedTeamId then
-						self.RedCaptureCheck = true
-					end
-				end
-			end
-		end
-		if self.BlueCaptureCheck or self.RedCaptureCheck then
-			if not self.RedCaptureCheck == self.BlueCaptureCheck then
-				if self.RedCaptureCheck then
-					gamemode.SetRoundStage("RedCapturing")
-					timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
-				elseif self.BlueCaptureCheck then
-					gamemode.SetRoundStage("BlueCapturing")
-					timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
-				end
-			else
-				timer.Clear(self, "CheckCaptureTimer")
-				gamemode.SetRoundStage("Contested")
-			end
-		else
-			gamemode.SetRoundStage("Uncontested")
-			timer.Clear(self, "CheckCaptureTimer")
-		end
-	end
-end
-
-function teamelimination:CheckCaptureTimer()
-	if not self.RedCaptureCheck == self.BlueCaptureCheck then
-		if self.RedCaptureCheck then
-			timer.Clear(self, "CheckCaptureTimer")
-			gamemode.AddGameStat("Result=Team2")
-			gamemode.AddGameStat("Summary=CapturedObj")
-			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
-			gamemode.SetRoundStage("PostRoundWait")
-		elseif self.BlueCaptureCheck then
-			timer.Clear(self, "CheckCaptureTimer")
-			gamemode.AddGameStat("Result=Team1")
-			gamemode.AddGameStat("Summary=CapturedObj")
-			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
-			gamemode.SetRoundStage("PostRoundWait")
-		end
-	else
-		if self.RedCaptureCheck or self.BlueCaptureCheck then
-			gamemode.SetRoundStage("Contested")
-		else
-			gamemode.SetRoundStage("Uncontested")
-		end
-		self.RedCaptureCheck = false
-		self.BlueCaptureCheck = false
-	end
-	timer.Clear(self, "CheckCaptureTimer")
-end
-
-function teamelimination:CheckReadyDownTimer()
+function kingofthehill:CheckReadyDownTimer()
 	if gamemode.GetRoundStage() == "ReadyCountdown" then
-		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(false)
-		local BlueReady = ReadyPlayerTeamCounts[self.BlueTeamId]
-		local RedReady = ReadyPlayerTeamCounts[self.RedTeamId]
+		local ReadyPlayerTeamCounts = gamemode.GetReadyPlayerTeamCounts(true)
+		local BlueReady = ReadyPlayerTeamCounts[self.PlayerTeams.Blue.TeamId]
+		local RedReady = ReadyPlayerTeamCounts[self.PlayerTeams.Red.TeamId]
 		if BlueReady < 1 or RedReady < 1 then
 			gamemode.SetRoundStage("WaitingForReady")
 		end
 	end
 end
 
-function teamelimination:OnRoundStageSet(RoundStage)
+function kingofthehill:OnRoundStageSet(RoundStage)
 	if RoundStage == "WaitingForReady" then
 		timer.ClearAll()
-		self.RedCaptureCheck = false
-		self.BlueCaptureCheck = false
 		self.ExtractionPointIndex = umath.random(#self.ExtractionPoints)
 
 		for i = 1, #self.ExtractionPoints do
@@ -244,50 +148,54 @@ function teamelimination:OnRoundStageSet(RoundStage)
 				self:RandomiseInsertionPoints(self.InsertionPoints)
 			end
 		end
-	elseif RoundStage == "RedCapturing" or RoundStage == "BlueCapturing" then
-		gamemode.SetRoundStageTime(self.CaptureTime)
-	elseif RoundStage == "Uncontested" or RoundStage == "Contested" then
-		gamemode.SetRoundStageTime(gamemode.GetGameOption("roundtime") * 60)
 	end
 end
 
-function teamelimination:OnCharacterDied(Character, CharacterController, KillerController)
+function kingofthehill:OnCharacterDied(Character, CharacterController, KillerController)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		if CharacterController ~= nil then
-			player.SetLives(CharacterController, 0)
-			timer.Set(self, "CheckEndRoundTimer", 1.0, false)
-			gamemode.EnterReadyRoom(CharacterController)
+			player.SetLives(CharacterController, player.GetLives(CharacterController) - 1)
+			timer.Set("CheckEndRound", self, self.CheckEndRoundTimer, 1.0, false);
 		end
 	end
 end
 
-function teamelimination:CheckEndRoundTimer()
-	local BluePlayers = gamemode.GetPlayerList("Lives", self.BlueTeamId, true, 1, false)
-	local RedPlayers = gamemode.GetPlayerList("Lives", self.RedTeamId, true, 1, false)
+function kingofthehill:CheckEndRoundTimer()
 	local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
-	local LivingPlayers = gamemode.GetPlayerList("Lives", 255, true, 1, false)
-	self.RedCaptureCheck = false
-	self.BlueCaptureCheck = false
-	for i = 1, #LivingPlayers do
-		local LivingCharacter = player.GetCharacter(LivingPlayers[i])
-		for j = 1, #Overlaps do
-			if Overlaps[j] == LivingCharacter then
-				if actor.GetTeamId(LivingCharacter) == self.BlueTeamId then
-					self.BlueCaptureCheck = true
-				elseif actor.GetTeamId(LivingCharacter) == self.RedTeamId then
-					self.RedCaptureCheck = true
+	local BluePlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Blue.TeamId, 1, false)
+	local RedPlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Red.TeamId, 1, false)
+	local bBLivingOverlap = false
+	local bRLivingOverlap = false
+	for i = 1, #BluePlayersWithLives do
+		local PlayerCharacter = player.GetCharacter(BluePlayersWithLives[i])
+		if PlayerCharacter ~= nil then
+			for j = 1, #Overlaps do
+				if Overlaps[j] == PlayerCharacter then
+					bBLivingOverlap = true
+					break
 				end
 			end
 		end
 	end
-	if self.BlueCaptureCheck or self.RedCaptureCheck then
-		if not self.RedCaptureCheck == self.BlueCaptureCheck then
-			if self.RedCaptureCheck then
+	for i = 1, #RedPlayersWithLives do
+		local PlayerCharacter = player.GetCharacter(RedPlayersWithLives[i])
+		if PlayerCharacter ~= nil then
+			for j = 1, #Overlaps do
+				if Overlaps[j] == PlayerCharacter then
+					bRLivingOverlap = true
+					break
+				end
+			end
+		end
+	end
+	if bBLivingOverlap or bRLivingOverlap then
+		if not bRLivingOverlap == bBLivingOverlap then
+			if bRLivingOverlap then
 				gamemode.SetRoundStage("RedCapturing")
-				timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
-			elseif self.BlueCaptureCheck then
+				timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
+			elseif bBLivingOverlap then
 				gamemode.SetRoundStage("BlueCapturing")
-				timer.Set(self, "CheckCaptureTimer", self.CaptureTime, false)
+				timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
 			end
 		else
 			timer.Clear(self, "CheckCaptureTimer")
@@ -296,31 +204,25 @@ function teamelimination:CheckEndRoundTimer()
 	else
 		timer.Clear(self, "CheckCaptureTimer")
 		gamemode.SetRoundStage("Uncontested")
-		self.RedCaptureCheck = false
-		self.BlueCaptureCheck = false
 	end
-	
-	if #BluePlayers > 0 and #RedPlayers == 0 then
-		timer.Clear(self, "CheckCaptureTimer")
+	if #BluePlayersWithLives > 0 and #RedPlayersWithLives == 0 then
 		gamemode.AddGameStat("Result=Team1")
 		gamemode.AddGameStat("Summary=RedEliminated")
-		gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
+		gamemode.AddGameStat("CompleteObjectives=EliminateBlue")
 		gamemode.SetRoundStage("PostRoundWait")
-	elseif #BluePlayers == 0 and #RedPlayers > 0 then
-		timer.Clear(self, "CheckCaptureTimer")
+	elseif #BluePlayersWithLives == 0 and #RedPlayersWithLives > 0 then
 		gamemode.AddGameStat("Result=Team2")
 		gamemode.AddGameStat("Summary=BlueEliminated")
-		gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
+		gamemode.AddGameStat("CompleteObjectives=EliminateRed")
 		gamemode.SetRoundStage("PostRoundWait")
-	elseif #BluePlayers == 0 and #RedPlayers == 0 then
-		timer.Clear(self, "CheckCaptureTimer")
+	elseif #BluePlayersWithLives == 0 and #RedPlayersWithLives == 0 then
 		gamemode.AddGameStat("Result=None")
 		gamemode.AddGameStat("Summary=BothEliminated")
 		gamemode.SetRoundStage("PostRoundWait")
 	end
 end
 
-function teamelimination:RandomiseInsertionPointGroups()
+function kingofthehill:RandomiseInsertionPointGroups()
 	local NewGroupIndex = self.PrevGroupIndex
 
 	while (NewGroupIndex == self.PrevGroupIndex) do
@@ -344,13 +246,13 @@ function teamelimination:RandomiseInsertionPointGroups()
 	end
 end
 
-function teamelimination:RandomiseInsertionPoints(TargetInsertionPoints)
-	local ShuffledInsertionPoints = {}
-
+function kingofthehill:RandomiseInsertionPoints(TargetInsertionPoints)
 	if #TargetInsertionPoints < 2 then
 		print("Error: #TargetInsertionPoints < 2")
 		return
 	end
+
+	local ShuffledInsertionPoints = {}
 
 	local BlueIndex = umath.random(#TargetInsertionPoints)
 	local RedIndex = BlueIndex + umath.random(#TargetInsertionPoints - 1)
@@ -361,10 +263,10 @@ function teamelimination:RandomiseInsertionPoints(TargetInsertionPoints)
 	for i, InsertionPoint in ipairs(TargetInsertionPoints) do
 		if i == BlueIndex then
 			actor.SetActive(InsertionPoint, true)
-			actor.SetTeamId(InsertionPoint, self.BlueTeamId)
+			actor.SetTeamId(InsertionPoint, self.PlayerTeams.Blue.TeamId)
 		elseif i == RedIndex then
 			actor.SetActive(InsertionPoint, true)
-			actor.SetTeamId(InsertionPoint, self.RedTeamId)
+			actor.SetTeamId(InsertionPoint, self.PlayerTeams.Red.TeamId)
 		else
 			actor.SetActive(InsertionPoint, false)
 			actor.SetTeamId(InsertionPoint, 255)
@@ -372,24 +274,174 @@ function teamelimination:RandomiseInsertionPoints(TargetInsertionPoints)
 	end
 end
 
-function teamelimination:ShouldCheckForTeamKills()
+function kingofthehill:ShouldCheckForTeamKills()
 	if gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
 		return true
 	end
 	return false
 end
 
-function teamelimination:PlayerCanEnterPlayArea(PlayerState)
+function kingofthehill:PlayerCanEnterPlayArea(PlayerState)
 	if player.GetInsertionPoint(PlayerState) ~= nil then
 		return true
 	end
 	return false
 end
 
-function teamelimination:LogOut(Exiting)
+function kingofthehill:LogOut(Exiting)
 	if gamemode.GetRoundStage() == "PreRoundWait" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "InProgress"or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
-		timer.Set(self, "CheckEndRoundTimer", 1.0, false);
+		timer.Set("CheckEndRound", self, self.CheckEndRoundTimer, 1.0, false);
 	end
 end
 
-return teamelimination
+function kingofthehill:OnGameTriggerBeginOverlap(GameTrigger, Character)
+	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
+		local BluePlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Blue.TeamId, 1, false)
+		local RedPlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Red.TeamId, 1, false)
+		local bBLivingOverlap = false
+		local bRLivingOverlap = false
+		for i = 1, #BluePlayersWithLives do
+			local PlayerCharacter = player.GetCharacter(BluePlayersWithLives[i])
+			if PlayerCharacter ~= nil then
+				for j = 1, #Overlaps do
+					if Overlaps[j] == PlayerCharacter then
+						bBLivingOverlap = true
+						break
+					end
+				end
+			end
+		end
+		for i = 1, #RedPlayersWithLives do
+			local PlayerCharacter = player.GetCharacter(RedPlayersWithLives[i])
+			if PlayerCharacter ~= nil then
+				for j = 1, #Overlaps do
+					if Overlaps[j] == PlayerCharacter then
+						bRLivingOverlap = true
+						break
+					end
+				end
+			end
+		end
+		if bBLivingOverlap or bRLivingOverlap then
+			if not bRLivingOverlap == bBLivingOverlap then
+				if bRLivingOverlap then
+					gamemode.SetRoundStage("RedCapturing")
+					timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
+				elseif bBLivingOverlap then
+					gamemode.SetRoundStage("BlueCapturing")
+					timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
+				end
+			else
+				timer.Clear(self, "CheckCaptureTimer")
+				gamemode.SetRoundStage("Contested")
+			end
+		else
+			timer.Clear(self, "CheckCaptureTimer")
+			gamemode.SetRoundStage("Uncontested")
+		end
+	end
+end
+
+function kingofthehill:OnGameTriggerEndOverlap(GameTrigger, Character)
+	if gamemode.GetRoundStage() == "InProgress" or gamemode.GetRoundStage() == "Uncontested" or gamemode.GetRoundStage() == "Contested" or gamemode.GetRoundStage() == "RedCapturing" or gamemode.GetRoundStage() == "BlueCapturing" then
+		local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
+		local BluePlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Blue.TeamId, 1, false)
+		local RedPlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Red.TeamId, 1, false)
+		local bBLivingOverlap = false
+		local bRLivingOverlap = false
+		for i = 1, #BluePlayersWithLives do
+			local PlayerCharacter = player.GetCharacter(BluePlayersWithLives[i])
+			if PlayerCharacter ~= nil then
+				for j = 1, #Overlaps do
+					if Overlaps[j] == PlayerCharacter then
+						bBLivingOverlap = true
+						break
+					end
+				end
+			end
+		end
+		for i = 1, #RedPlayersWithLives do
+			local PlayerCharacter = player.GetCharacter(RedPlayersWithLives[i])
+			if PlayerCharacter ~= nil then
+				for j = 1, #Overlaps do
+					if Overlaps[j] == PlayerCharacter then
+						bRLivingOverlap = true
+						break
+					end
+				end
+			end
+		end
+		if bBLivingOverlap or bRLivingOverlap then
+			if not bRLivingOverlap == bBLivingOverlap then
+				if bRLivingOverlap then
+					gamemode.SetRoundStage("RedCapturing")
+					timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
+				elseif bBLivingOverlap then
+					gamemode.SetRoundStage("BlueCapturing")
+					timer.Set("CheckCaptureTimer", self, self.CheckCaptureTimer, self.Settings.CaptureTime.Value, false)
+				end
+			else
+				timer.Clear(self, "CheckCaptureTimer")
+				gamemode.SetRoundStage("Contested")
+			end
+		else
+			timer.Clear(self, "CheckCaptureTimer")
+			gamemode.SetRoundStage("Uncontested")
+		end
+	end
+end
+
+function kingofthehill:CheckCaptureTimer()
+	local Overlaps = actor.GetOverlaps(self.ExtractionPoints[self.ExtractionPointIndex], 'GroundBranch.GBCharacter')
+	local BluePlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Blue.TeamId, 1, false)
+	local RedPlayersWithLives = gamemode.GetPlayerListByLives(self.PlayerTeams.Red.TeamId, 1, false)
+	local bBLivingOverlap = false
+	local bRLivingOverlap = false
+	for i = 1, #BluePlayersWithLives do
+		local PlayerCharacter = player.GetCharacter(BluePlayersWithLives[i])
+		if PlayerCharacter ~= nil then
+			for j = 1, #Overlaps do
+				if Overlaps[j] == PlayerCharacter then
+					bBLivingOverlap = true
+					break
+				end
+			end
+		end
+	end
+	for i = 1, #RedPlayersWithLives do
+		local PlayerCharacter = player.GetCharacter(RedPlayersWithLives[i])
+		if PlayerCharacter ~= nil then
+			for j = 1, #Overlaps do
+				if Overlaps[j] == PlayerCharacter then
+					bRLivingOverlap = true
+					break
+				end
+			end
+		end
+	end
+	if not bRLivingOverlap == bBLivingOverlap then
+		if bRLivingOverlap then
+			timer.Clear(self, "CheckCaptureTimer")
+			gamemode.AddGameStat("Result=Team2")
+			gamemode.AddGameStat("Summary=CapturedObj")
+			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
+			gamemode.SetRoundStage("PostRoundWait")
+		elseif bBLivingOverlap then
+			timer.Clear(self, "CheckCaptureTimer")
+			gamemode.AddGameStat("Result=Team1")
+			gamemode.AddGameStat("Summary=CapturedObj")
+			gamemode.AddGameStat("CompleteObjectives=CaptureAndHoldExtractionForSixtySeconds")
+			gamemode.SetRoundStage("PostRoundWait")
+		end
+	else
+		if bRLivingOverlap or bBLivingOverlap then
+			gamemode.SetRoundStage("Contested")
+		else
+			gamemode.SetRoundStage("Uncontested")
+		end
+	end
+	timer.Clear(self, "CheckCaptureTimer")
+end
+
+return kingofthehill
